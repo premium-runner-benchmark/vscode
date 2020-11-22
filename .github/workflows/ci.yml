@@ -119,6 +119,7 @@ jobs:
 
   monaco:
     runs-on: ${{ matrix.runner_type }}
+    continue-on-error: true
     strategy:
       matrix:
         runner_type: [ds2v2,ds2v3,ds3v2,ds4v2,ds5v2,f32s,f64s,m5large,m5dlarge,d2asv4,d2dsv4]
@@ -183,6 +184,7 @@ jobs:
 
   process:
     name: Process Perf Data
+    continue-on-error: true
     runs-on: ubuntu-latest
     needs: [monaco]
     steps:
