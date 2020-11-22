@@ -137,16 +137,16 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     steps:
+    - name: Runner workspace path
+      run: |
+        echo "Cleaning up previous run"
+        rm -rf "${{ github.workspace }}"
     #### Start stat collection
     - run: mkdir -p ${{ runner.temp }}/${{ env.artifactsDir }}
     - run: iostat -yxmt 1 > ${{ runner.temp }}/${{ env.iostatFile }} &
     - run: vmstat -n 1 > ${{ runner.temp }}/${{ env.vmstatFile }} &
     - run: date -R > ${{ runner.temp }}/${{ env.timingFile }}
     ##########################
-    - name: Runner workspace path
-      run: |
-        echo "Cleaning up previous run"
-        rm -rf "${{ github.workspace }}"
     - run: |
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.0/install.sh | bash
         source ~/.nvm/nvm.sh
