@@ -142,7 +142,7 @@ jobs:
     - run: date -R > ${{ runner.temp }}/${{ env.timingFile }}
     ##########################
     - run: |
-        curl https://raw.github.com/creationix/nvm/master/install.sh | sh
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.0/install.sh | bash
         source ~/.nvm/nvm.sh
         nvm install 14.15.1
         node -v
