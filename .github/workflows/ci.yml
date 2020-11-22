@@ -118,11 +118,29 @@ jobs:
   #     name: Run Integration Tests (Electron)
 
   monaco:
-    runs-on: [f4s]
+    runs-on: [matrix.runner_type]
+    strategy:
+      matrix:
+        runner_type: [ds2v2,ds2v3,ds3v2,ds4v2,ds5v2,f32s,f64s,m5large,m5dlarge,d2asv4,d2dsv4]
+    
     env:
+      #### For stat collection
+      runId: ${{ matrix.runner_type }}-${{ github.workflow }}
+      artifactsDir: artifacts/${{ github.repository }}
+      iostatFile: artifacts/${{ github.repository }}/${{ matrix.runner_type }}-iostat.txt
+      vmstatFile: artifacts/${{ github.repository }}/${{ matrix.runner_type }}-vmstat.txt
+      timingFile: artifacts/${{ github.repository }}/${{ matrix.runner_type }}-timing.txt
+      ##########################
       CHILD_CONCURRENCY: "1"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     steps:
+    #### Start stat collection
+    - run: mkdir -p ${{ runner.temp }}/${{ env.artifactsDir }}
+    - run: iostat -yxmt 1 > ${{ runner.temp }}/${{ env.iostatFile }} &
+    - run: vmstat -n 1 > ${{ runner.temp }}/${{ env.vmstatFile }} &
+    - run: date -R > ${{ runner.temp }}/${{ env.timingFile }}
+    ##########################
     - uses: actions/checkout@v1
     # TODO: rename azure-pipelines/linux/xvfb.init to github-actions
     - run: |
@@ -142,3 +160,51 @@ jobs:
       name: Run Monaco Editor Checks
     - run: yarn gulp editor-esm-bundle
       name: Editor Distro & ESM Bundle
+
+   #### Collect/upload stats
+    - run: date -R >> ${{ runner.temp }}/${{ env.timingFile }}
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: perfdata
+        path: ${{ runner.temp }}/${{ env.artifactsDir }}
+        if-no-files-found: error
+    ##########################
+
+  process:
+    name: Process Perf Data
+    runs-on: ubuntu-latest
+    needs: [monaco]
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+          architecture: x64
+      - uses: actions/checkout@v2
+        with:
+          repository: pjquirk/runnerperf
+          path: runnerperf
+      - uses: actions/checkout@v2
+        with:
+          repository: pjquirk/iostat-tool
+          path: runnerperf/iostat-tool
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2  
+        with:
+          name: perfdata
+          path: runnerperf/data
+      - name: Prereqs
+        run: sudo apt -y install datamash  
+      - name: Process stats
+        run: |
+          cd runnerperf
+          (cd iostat-tool && python setup.py develop)
+          ls -l data
+          script/dumpcsv.sh data output
+          script/aggregate.sh output ${{ github.repository }}
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: summary-perfdata
+          path: runnerperf/output/summary.csv
+          if-no-files-found: error
