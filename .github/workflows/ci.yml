@@ -123,7 +123,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        runner_type: [ds2v2,ds2v3,ds3v2,ds4v2,ds5v2,f32s,f64s,m5large,m5dlarge,d2asv4,d2dsv4]
+        runner_type: [ds2v2,ds2v3,ds3v2,ds4v2,ds5v2,f2s,f4s,f32s,f64s,d2asv4,d2dsv4]
     
     env:
       #### For stat collection
@@ -143,15 +143,17 @@ jobs:
     - run: vmstat -n 1 > ${{ runner.temp }}/${{ env.vmstatFile }} &
     - run: date -R > ${{ runner.temp }}/${{ env.timingFile }}
     ##########################
+    - name: Runner workspace path
+      run: |
+        echo "Cleaning up previous run"
+        rm -rf "${{ github.workspace }}"
     - run: |
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.0/install.sh | bash
         source ~/.nvm/nvm.sh
         nvm install 14.15.1
-        node -v
         curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
         echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
         sudo apt update && sudo apt install --no-install-recommends yarn
-        yarn version
         
     - uses: actions/checkout@v1
     # TODO: rename azure-pipelines/linux/xvfb.init to github-actions
