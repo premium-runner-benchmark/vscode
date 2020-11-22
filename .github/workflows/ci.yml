@@ -118,7 +118,7 @@ jobs:
   #     name: Run Integration Tests (Electron)
 
   monaco:
-    runs-on: ubuntu-latest
+    runs-on: [f4s]
     env:
       CHILD_CONCURRENCY: "1"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
