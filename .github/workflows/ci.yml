@@ -167,6 +167,8 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - name: Setup Python
+      uses: actions/setup-python@v2.1.4
     - run: yarn --frozen-lockfile
       name: Install Dependencies
     - run: yarn monaco-compile-check
